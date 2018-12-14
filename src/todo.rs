@@ -1,5 +1,12 @@
-use crate::command;
 use std::fs;
+use std::path::Path;
+
+pub enum TodoCommand {
+    Add(String),
+    Delete(u64),
+    List,
+    Help,
+}
 
 pub fn get_todo_pathname() -> String {
     String::from("/Users/kdurbin/todo.txt")
@@ -23,8 +30,8 @@ pub fn list() {
     println!("{}", todo_contents);
 }
 
-pub fn add(command: &command::Command) {
-    let new_todo = command.param.clone();
+pub fn add(text: String) {
+    let new_todo = text.clone();
     let todo_contents = read_todo_file();
 
     let new_contents = [todo_contents, new_todo].join("\n");
@@ -33,8 +40,8 @@ pub fn add(command: &command::Command) {
     list();
 }
 
-pub fn delete(command: &command::Command) {
-    let idx_to_delete: usize = command.param.clone().parse().unwrap();
+pub fn delete(index: u64) {
+    let idx_to_delete: usize = index as usize;
     let todo_contents = read_todo_file();
     let todo_lines: Vec<&str> = todo_contents.lines().collect();
     if todo_lines.len() > 0 {
@@ -60,6 +67,20 @@ pub fn delete(command: &command::Command) {
     list();
 }
 
-pub fn help(command: &command::Command) {
-    print!("Command {} not found", command.name);
+pub fn help() {
+    print!("Command not found");
+}
+
+pub fn run(command: TodoCommand) {
+    let todo_pathname = get_todo_pathname();
+    if !Path::new(&todo_pathname).exists() {
+        fs::write(&todo_pathname, "").expect("Cannot create todo.txt");
+    }
+
+    match command {
+        TodoCommand::Add(text) => add(text),
+        TodoCommand::List => list(),
+        TodoCommand::Delete(index) => delete(index),
+        TodoCommand::Help => help(),
+    }
 }

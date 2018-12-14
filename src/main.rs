@@ -1,24 +1,27 @@
 use std::env;
-use std::fs;
-use std::path::Path;
-mod command;
 mod todo;
+
+fn args_to_command(args: Vec<String>) -> todo::TodoCommand {
+    let name = args[1].clone();
+    let mut param = String::from("");
+
+    if args.len() > 2 {
+        param = args[2..].join(" ");
+    }
+
+    match name.as_ref() {
+        "add" => todo::TodoCommand::Add(param),
+        "delete" => todo::TodoCommand::Delete(param.parse().unwrap()),
+        "list" => todo::TodoCommand::List,
+        _ => todo::TodoCommand::Help,
+    }
+}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let command = command::Command::new(&args);
+    let command = args_to_command(args);
 
-    let todo_pathname = todo::get_todo_pathname();
-    if !Path::new(&todo_pathname).exists() {
-        fs::write(&todo_pathname, "").expect("Cannot create todo.txt");
-    }
-
-    match command.name.as_ref() {
-        "add" => todo::add(&command),
-        "list" => todo::list(),
-        "delete" => todo::delete(&command),
-        _ => todo::help(&command),
-    }
+    todo::run(command);
 }
 
 #[cfg(test)]
