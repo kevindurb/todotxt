@@ -12,14 +12,15 @@ fn read_todo_file() -> String {
 }
 
 fn write_todo_file(contents: &String) {
+    let trimmed_contents = contents.trim();
     let todo_pathname = get_todo_pathname();
-    fs::write(&todo_pathname, contents)
+    fs::write(&todo_pathname, trimmed_contents)
         .expect("Cannot write to todo.txt");
 }
 
 pub fn list() {
     let todo_contents = read_todo_file();
-    print!("{}", todo_contents);
+    println!("{}", todo_contents);
 }
 
 pub fn add(command: &command::Command) {
@@ -36,25 +37,25 @@ pub fn delete(command: &command::Command) {
     let idx_to_delete: usize = command.param.clone().parse().unwrap();
     let todo_contents = read_todo_file();
     let todo_lines: Vec<&str> = todo_contents.lines().collect();
-    let last_line = todo_lines.len() - 1;
-    let mut before_lines: Vec<&str> = Vec::new();
-    let mut after_lines: Vec<&str> = Vec::new();
+    if todo_lines.len() > 0 {
+        let last_line = todo_lines.len() - 1;
+        let mut before_lines: Vec<&str> = Vec::new();
+        let mut after_lines: Vec<&str> = Vec::new();
 
-    print!("DELETE IDX {}", idx_to_delete);
+        if idx_to_delete <= 0 {
+            after_lines = todo_lines[1..].to_vec();
+        } else if idx_to_delete >= last_line {
+            before_lines = todo_lines[..last_line].to_vec();
+        } else {
+            before_lines = todo_lines[..idx_to_delete].to_vec();
+            after_lines = todo_lines[idx_to_delete + 1..].to_vec();
+        }
 
-    if idx_to_delete <= 0 {
-        after_lines = todo_lines[1..].to_vec();
-    } else if idx_to_delete >= last_line {
-        before_lines = todo_lines[..last_line].to_vec();
-    } else {
-        before_lines = todo_lines[..idx_to_delete].to_vec();
-        after_lines = todo_lines[idx_to_delete + 1..].to_vec();
+        let before_content = before_lines.join("\n");
+        let after_content = after_lines.join("\n");
+        let new_content = format!("{}\n{}", before_content, after_content);
+        write_todo_file(&new_content);
     }
-
-    let before_content = before_lines.join("\n");
-    let after_content = after_lines.join("\n");
-    let new_content = format!("{}\n{}", before_content, after_content);
-    write_todo_file(&new_content);
 
     list();
 }
